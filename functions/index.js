@@ -37,7 +37,6 @@ exports.notifyNewAuction = functions.firestore
   });
 
 exports.whatsappBot = functions.https.onRequest(async (req, res) => {
-  // Verificamos si es un webhook de verificación (de Meta)
   if (req.method === 'GET') {
     const mode = req.query['hub.mode'];
     const token = req.query['hub.verify_token'];
@@ -50,13 +49,12 @@ exports.whatsappBot = functions.https.onRequest(async (req, res) => {
     }
   }
 
-  // Procesamos mensajes entrantes
   if (req.method === 'POST') {
     const entry = req.body.entry?.[0];
     const changes = entry?.changes?.[0];
     const message = changes?.value?.messages?.[0];
 
-    if (!message) return res.sendStatus(200); // No hay mensaje
+    if (!message) return res.sendStatus(200);
 
     const phone = message.from;
     const normalizedText = (message.text?.body || '').trim().toLowerCase();
@@ -67,20 +65,17 @@ exports.whatsappBot = functions.https.onRequest(async (req, res) => {
     }
     // Cuando recibimos el email, verificamos si es concesionario o usuario
     else if (normalizedText.includes('@')) {
-      // Es un email, entonces lo buscamos en la base de datos
       await handleStart(phone, normalizedText); // Aquí pasamos el email para buscar en la base de datos
     }
-    // Si el mensaje es 'concesionario' o 'usuario' después de recibir el email, lo procesamos
-    else if (['concesionario', 'usuario'].includes(normalizedText)) {
-      await handleUserType(phone, normalizedText);
-    } else {
-      await sendMessage(phone, 'Perdón, no entendí. Escribí "hola" para empezar.');
+    // En caso que el tipo ya haya sido identificado por el email
+    else {
+      await sendMessage(phone, 'Perdón, no entendí. Escribe un correo electrónico válido para comenzar.');
     }
 
     return res.sendStatus(200);
   }
 
-  return res.sendStatus(405); // Método no permitido
+  return res.sendStatus(405);
 });
 
 
