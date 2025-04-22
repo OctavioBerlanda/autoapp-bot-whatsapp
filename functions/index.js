@@ -1,7 +1,6 @@
 const functions = require('firebase-functions');
 const axios = require('axios');
 const handleStart = require('./handlers/handleStart');
-const handleUserType = require('./handlers/handleUserType');
 
 const admin = require('firebase-admin');
 const { sendMessage } = require('./responder'); // Importamos la función para enviar mensajes
@@ -59,17 +58,11 @@ exports.whatsappBot = functions.https.onRequest(async (req, res) => {
     const phone = message.from;
     const normalizedText = (message.text?.body || '').trim().toLowerCase();
 
-    // Si el mensaje es "hola", le pedimos el email
+    // Si dice "hola", iniciamos el flujo directamente usando el teléfono
     if (['hola', 'hi', 'buenas'].includes(normalizedText)) {
-      await sendMessage(phone, '¡Hola! 👋\nPara comenzar, por favor, ingresa tu correo electrónico.');
-    }
-    // Cuando recibimos el email, verificamos si es concesionario o usuario
-    else if (normalizedText.includes('@')) {
-      await handleStart(phone, normalizedText); // Aquí pasamos el email para buscar en la base de datos
-    }
-    // En caso que el tipo ya haya sido identificado por el email
-    else {
-      await sendMessage(phone, 'Perdón, no entendí. Escribe un correo electrónico válido para comenzar.');
+      await handleStart(phone); // Ya no pasamos email, sólo el número
+    } else {
+      await sendMessage(phone, 'Perdón, no entendí. Escribí "hola" para empezar.');
     }
 
     return res.sendStatus(200);
@@ -77,6 +70,7 @@ exports.whatsappBot = functions.https.onRequest(async (req, res) => {
 
   return res.sendStatus(405);
 });
+
 
 
 
